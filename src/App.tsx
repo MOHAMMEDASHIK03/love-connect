@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Requests from "./pages/Requests";
+import Matches from "./pages/Matches";
+import EditProfile from "./pages/EditProfile";
 import NotFound from "./pages/NotFound";
 import { Heart } from "lucide-react";
 
@@ -49,6 +51,8 @@ const App = () => (
             <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/requests" element={<ProtectedRoute><Requests /></ProtectedRoute>} />
+            <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><EditProfile /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
