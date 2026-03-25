@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Heart, LogOut, Mail, Home } from "lucide-react";
+import { Heart, LogOut, Mail, Home, Users, UserCog } from "lucide-react";
 
 const Navbar = () => {
   const { user, signOut } = useAuth();
@@ -12,6 +12,8 @@ const Navbar = () => {
   const navItems = [
     { path: "/", label: "Browse", icon: Home },
     { path: "/requests", label: "Requests", icon: Mail },
+    { path: "/matches", label: "Matches", icon: Users },
+    { path: "/profile", label: "Profile", icon: UserCog },
   ];
 
   return (
