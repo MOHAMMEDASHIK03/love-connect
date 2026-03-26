@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
@@ -6,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getProfilePhotoUrl } from "@/lib/supabase-helpers";
-import { Heart, User, MapPin, Phone, Eye, HeartOff, Mail } from "lucide-react";
+import { Heart, User, MapPin, Phone, Eye, HeartOff, Mail, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface MatchProfile {
@@ -23,6 +24,7 @@ interface MatchProfile {
 
 const Matches = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [matches, setMatches] = useState<MatchProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProfile, setSelectedProfile] = useState<MatchProfile | null>(null);
@@ -135,6 +137,9 @@ const Matches = () => {
                       <div className="mt-2 flex flex-wrap gap-2 justify-center xs:justify-start">
                         <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setSelectedProfile(m)}>
                           <Eye className="h-3.5 w-3.5" /> View Profile
+                        </Button>
+                        <Button size="sm" className="gap-1.5 gradient-warm border-0" onClick={() => navigate(`/chat?with=${m.user_id}`)}>
+                          <MessageCircle className="h-3.5 w-3.5" /> Chat
                         </Button>
                         <Button
                           size="sm"
