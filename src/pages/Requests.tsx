@@ -99,32 +99,44 @@ const Requests = () => {
               const photoUrl = getProfilePhotoUrl(req.profile?.photo_url ?? null);
               return (
                 <Card key={req.id} className="shadow-card">
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-full bg-muted">
-                      {photoUrl ? (
-                        <img src={photoUrl} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                          <User className="h-7 w-7 text-muted-foreground/40" />
+                  <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4">
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-full bg-muted">
+                        {photoUrl ? (
+                          <img src={photoUrl} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <User className="h-7 w-7 text-muted-foreground/40" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0 sm:hidden">
+                        <h3 className="font-semibold text-lg truncate" style={{ fontFamily: "var(--font-display)" }}>
+                          {req.profile?.name ?? "Unknown"}, {req.profile?.age}
+                        </h3>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="truncate">{req.profile?.location}</span>
                         </div>
-                      )}
+                        <span className="text-xs text-muted-foreground">{req.profile?.gender}</span>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="hidden sm:block flex-1 min-w-0">
                       <h3 className="font-semibold text-lg truncate" style={{ fontFamily: "var(--font-display)" }}>
                         {req.profile?.name ?? "Unknown"}, {req.profile?.age}
                       </h3>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {req.profile?.location}
+                        <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="truncate">{req.profile?.location}</span>
                       </div>
                       <span className="text-xs text-muted-foreground">{req.profile?.gender}</span>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                       {req.status === "pending" ? (
                         <>
                           <Button
                             size="sm"
-                            className="gap-1 gradient-warm border-0"
+                            className="gap-1 gradient-warm border-0 flex-1 sm:flex-none"
                             onClick={() => handleAction(req.id, "accepted")}
                           >
                             <Check className="h-4 w-4" /> Accept
@@ -132,7 +144,7 @@ const Requests = () => {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="gap-1"
+                            className="gap-1 flex-1 sm:flex-none"
                             onClick={() => handleAction(req.id, "rejected")}
                           >
                             <X className="h-4 w-4" /> Reject
