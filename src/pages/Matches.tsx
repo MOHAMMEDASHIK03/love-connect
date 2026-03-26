@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
@@ -6,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getProfilePhotoUrl } from "@/lib/supabase-helpers";
-import { Heart, User, MapPin, Phone, Eye, HeartOff, Mail } from "lucide-react";
+import { Heart, User, MapPin, Phone, Eye, HeartOff, Mail, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface MatchProfile {
