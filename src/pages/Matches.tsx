@@ -112,8 +112,8 @@ const Matches = () => {
               const photoUrl = getProfilePhotoUrl(m.photo_url);
               return (
                 <Card key={m.user_id} className="overflow-hidden shadow-card">
-                  <CardContent className="flex gap-4 p-4">
-                    <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-muted">
+                  <CardContent className="flex flex-col xs:flex-row gap-4 p-4">
+                    <div className="h-24 w-24 flex-shrink-0 mx-auto xs:mx-0 overflow-hidden rounded-xl bg-muted">
                       {photoUrl ? (
                         <img src={photoUrl} alt={m.name} className="h-full w-full object-cover" />
                       ) : (
@@ -122,28 +122,28 @@ const Matches = () => {
                         </div>
                       )}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 text-center xs:text-left">
                       <h3 className="font-semibold text-lg truncate" style={{ fontFamily: "var(--font-display)" }}>
                         {m.name}, {m.age}
                       </h3>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <MapPin className="h-3.5 w-3.5" /> {m.location}
+                      <div className="flex items-center justify-center xs:justify-start gap-1 text-sm text-muted-foreground">
+                        <MapPin className="h-3.5 w-3.5 flex-shrink-0" /> <span className="truncate">{m.location}</span>
                       </div>
                       <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
                         <Heart className="h-3 w-3 fill-green-600" /> Matched
                       </span>
-                      <div className="mt-2 flex gap-2">
+                      <div className="mt-2 flex flex-wrap gap-2 justify-center xs:justify-start">
                         <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setSelectedProfile(m)}>
                           <Eye className="h-3.5 w-3.5" /> View Profile
                         </Button>
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="gap-1.5 text-destructive hover:text-destructive"
+                          className="gap-1.5 text-destructive hover:text-destructive whitespace-nowrap"
                           disabled={unmatchingId === m.user_id}
                           onClick={() => handleUnmatch(m.user_id)}
                         >
-                          <HeartOff className="h-3.5 w-3.5" />
+                          <HeartOff className="h-3.5 w-3.5 flex-shrink-0" />
                           {unmatchingId === m.user_id ? "..." : "Not Interested"}
                         </Button>
                       </div>
@@ -158,7 +158,7 @@ const Matches = () => {
 
       {/* View Profile Dialog */}
       <Dialog open={!!selectedProfile} onOpenChange={(open) => !open && setSelectedProfile(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle style={{ fontFamily: "var(--font-display)" }}>
               {selectedProfile?.name}
