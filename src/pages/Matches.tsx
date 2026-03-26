@@ -3,8 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getProfilePhotoUrl } from "@/lib/supabase-helpers";
-import { Heart, User, MapPin, Phone } from "lucide-react";
+import { Heart, User, MapPin, Phone, Eye, HeartOff, Mail } from "lucide-react";
+import { toast } from "sonner";
 
 interface MatchProfile {
   user_id: string;
@@ -13,6 +16,7 @@ interface MatchProfile {
   gender: string;
   location: string;
   mobile: string;
+  email: string;
   photo_url: string | null;
   bio?: string;
 }
@@ -21,36 +25,68 @@ const Matches = () => {
   const { user } = useAuth();
   const [matches, setMatches] = useState<MatchProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedProfile, setSelectedProfile] = useState<MatchProfile | null>(null);
+  const [unmatchingId, setUnmatchingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
-    const fetchMatches = async () => {
-      // Get accepted interests where user is either sender or receiver
-      const { data: interests } = await supabase
-        .from("interests")
-        .select("from_user_id, to_user_id")
-        .eq("status", "accepted")
-        .or(`from_user_id.eq.${user.id},to_user_id.eq.${user.id}`);
-
-      if (!interests || interests.length === 0) {
-        setLoading(false);
-        return;
-      }
-
-      const matchedUserIds = interests.map((i) =>
-        i.from_user_id === user.id ? i.to_user_id : i.from_user_id
-      );
-
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, name, age, gender, location, mobile, photo_url, bio")
-        .in("user_id", matchedUserIds);
-
-      setMatches((profiles as MatchProfile[]) || []);
-      setLoading(false);
-    };
     fetchMatches();
   }, [user]);
+
+  const fetchMatches = async () => {
+    if (!user) return;
+    const { data: interests } = await supabase
+      .from("interests")
+      .select("from_user_id, to_user_id")
+      .eq("status", "accepted")
+      .or(`from_user_id.eq.${user.id},to_user_id.eq.${user.id}`);
+
+    if (!interests || interests.length === 0) {
+      setMatches([]);
+      setLoading(false);
+      return;
+    }
+
+    const matchedUserIds = interests.map((i) =>
+      i.from_user_id === user.id ? i.to_user_id : i.from_user_id
+    );
+
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("user_id, name, age, gender, location, mobile, email, photo_url, bio")
+      .in("user_id", matchedUserIds);
+
+    setMatches((profiles as MatchProfile[]) || []);
+    setLoading(false);
+  };
+
+  const handleUnmatch = async (matchUserId: string) => {
+    if (!user) return;
+    setUnmatchingId(matchUserId);
+
+    // Delete the interest record(s) between the two users
+    const { error: e1 } = await supabase
+      .from("interests")
+      .delete()
+      .eq("from_user_id", user.id)
+      .eq("to_user_id", matchUserId);
+
+    const { error: e2 } = await supabase
+      .from("interests")
+      .delete()
+      .eq("from_user_id", matchUserId)
+      .eq("to_user_id", user.id);
+
+    setUnmatchingId(null);
+
+    if (e1 || e2) {
+      toast.error("Failed to unmatch");
+    } else {
+      setMatches((prev) => prev.filter((m) => m.user_id !== matchUserId));
+      setSelectedProfile(null);
+      toast.success("Unmatched. Both profiles are now visible in browse again.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -93,13 +129,24 @@ const Matches = () => {
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <MapPin className="h-3.5 w-3.5" /> {m.location}
                       </div>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground mt-0.5">
-                        <Phone className="h-3.5 w-3.5" /> {m.mobile}
-                      </div>
-                      {m.bio && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{m.bio}</p>}
                       <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
                         <Heart className="h-3 w-3 fill-green-600" /> Matched
                       </span>
+                      <div className="mt-2 flex gap-2">
+                        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setSelectedProfile(m)}>
+                          <Eye className="h-3.5 w-3.5" /> View Profile
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="gap-1.5 text-destructive hover:text-destructive"
+                          disabled={unmatchingId === m.user_id}
+                          onClick={() => handleUnmatch(m.user_id)}
+                        >
+                          <HeartOff className="h-3.5 w-3.5" />
+                          {unmatchingId === m.user_id ? "..." : "Not Interested"}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -108,6 +155,61 @@ const Matches = () => {
           </div>
         )}
       </main>
+
+      {/* View Profile Dialog */}
+      <Dialog open={!!selectedProfile} onOpenChange={(open) => !open && setSelectedProfile(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle style={{ fontFamily: "var(--font-display)" }}>
+              {selectedProfile?.name}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedProfile && (
+            <div className="space-y-4">
+              <div className="aspect-square w-full overflow-hidden rounded-xl bg-muted">
+                {getProfilePhotoUrl(selectedProfile.photo_url) ? (
+                  <img
+                    src={getProfilePhotoUrl(selectedProfile.photo_url)!}
+                    alt={selectedProfile.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <User className="h-16 w-16 text-muted-foreground/40" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <p className="text-lg font-semibold">{selectedProfile.name}, {selectedProfile.age}</p>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <MapPin className="h-4 w-4" /> {selectedProfile.location}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Phone className="h-4 w-4" /> {selectedProfile.mobile}
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Mail className="h-4 w-4" /> {selectedProfile.email}
+                </div>
+                <span className="inline-block rounded-full bg-accent px-2.5 py-0.5 text-xs font-medium text-accent-foreground">
+                  {selectedProfile.gender}
+                </span>
+                {selectedProfile.bio && (
+                  <p className="text-sm text-muted-foreground pt-2 border-t">{selectedProfile.bio}</p>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                className="w-full gap-2 text-destructive hover:text-destructive"
+                onClick={() => handleUnmatch(selectedProfile.user_id)}
+                disabled={unmatchingId === selectedProfile.user_id}
+              >
+                <HeartOff className="h-4 w-4" />
+                Not Interested Anymore
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
