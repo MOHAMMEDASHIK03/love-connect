@@ -26,11 +26,19 @@ const Index = () => {
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      const [{ data: profilesData }, { data: interestsData }] = await Promise.all([
+      const [{ data: profilesData }, { data: interestsData }, { data: acceptedData }] = await Promise.all([
         supabase.from("profiles").select("*").neq("user_id", user.id),
         supabase.from("interests").select("to_user_id").eq("from_user_id", user.id),
+        supabase.from("interests").select("from_user_id, to_user_id").eq("status", "accepted").or(`from_user_id.eq.${user.id},to_user_id.eq.${user.id}`),
       ]);
-      setProfiles(profilesData || []);
+
+      // Collect matched user IDs to hide from browse
+      const matchedIds = new Set<string>();
+      (acceptedData || []).forEach((i) => {
+        matchedIds.add(i.from_user_id === user.id ? i.to_user_id : i.from_user_id);
+      });
+
+      setProfiles((profilesData || []).filter((p) => !matchedIds.has(p.user_id)));
       setSentInterests(new Set((interestsData || []).map((i) => i.to_user_id)));
     };
     fetchData();
