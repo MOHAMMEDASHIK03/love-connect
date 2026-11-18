@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Heart } from "lucide-react";
 import { toast } from "sonner";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -21,12 +22,17 @@ const Login = () => {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        toast.error(getAuthErrorMessage(error, "sign-in"));
+        return;
+      }
       navigate("/");
+    } catch (error) {
+      toast.error(getAuthErrorMessage(error, "sign-in"));
+    } finally {
+      setLoading(false);
     }
   };
 

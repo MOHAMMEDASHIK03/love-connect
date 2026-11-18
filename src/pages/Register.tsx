@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Heart, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
 
 const Register = () => {
   const [form, setForm] = useState({
@@ -45,47 +46,65 @@ const Register = () => {
     }
 
     setLoading(true);
-    const { data: authData, error: authError } = await supabase.auth.signUp({ email, password });
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            name: name.trim(),
+            age: String(age),
+            gender,
+            mobile: mobile.trim(),
+            location: location.trim(),
+          },
+        },
+      });
 
-    if (authError) {
-      toast.error(authError.message);
-      setLoading(false);
-      return;
-    }
-
-    const userId = authData.user?.id;
-    if (!userId) {
-      toast.error("Registration failed");
-      setLoading(false);
-      return;
-    }
-
-    let photoUrl: string | null = null;
-    if (photo) {
-      try {
-        photoUrl = await uploadProfilePhoto(userId, photo);
-      } catch {
-        console.error("Photo upload failed");
+      if (authError) {
+        toast.error(getAuthErrorMessage(authError, "registration"));
+        return;
       }
-    }
 
-    const { error: profileError } = await supabase.from("profiles").insert({
-      user_id: userId,
-      name,
-      email,
-      age: Number(age),
-      gender,
-      mobile,
-      location,
-      photo_url: photoUrl,
-    });
+      const userId = authData.user?.id;
+      if (!userId) {
+        toast.error("Your account could not be created. Please try again.");
+        return;
+      }
 
-    setLoading(false);
-    if (profileError) {
-      toast.error(profileError.message);
-    } else {
-      toast.success("Registration successful! Please check your email to verify.");
+      let photoSaved = !photo;
+      if (photo && authData.session) {
+        try {
+          const photoPath = await uploadProfilePhoto(userId, photo);
+          const { error: photoError } = await supabase
+            .from("profiles")
+            .update({ photo_url: photoPath })
+            .eq("user_id", userId);
+          photoSaved = !photoError;
+        } catch {
+          photoSaved = false;
+        }
+      }
+
+      if (authData.session) {
+        toast.success(
+          photoSaved
+            ? "Your account is ready. You can now sign in."
+            : "Your account is ready. Add your profile photo after signing in."
+        );
+      } else {
+        toast.success(
+          photo
+            ? "Account created. Confirm your email, then sign in and add your profile photo."
+            : "Account created. Check your email to confirm your address, then sign in."
+        );
+      }
       navigate("/login");
+    } catch (error) {
+      toast.error(getAuthErrorMessage(error, "registration"));
+    } finally {
+      setLoading(false);
     }
   };
 

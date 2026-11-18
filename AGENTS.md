@@ -1,0 +1,1 @@
+- Create matrimony profile rows from signup metadata in a public auth-user trigger, because email confirmation may leave the client without a session for profile writes.
