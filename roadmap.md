@@ -1,0 +1,3 @@
+- [ ] Fix email-confirmed registration so profile details are saved during signup.
+- [ ] Show clear, actionable login and registration errors, including connection failures.
+- [ ] Verify the auth connection and signup/login error handling.
